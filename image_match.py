@@ -1,3 +1,4 @@
+#!/bin/env python
 #
 #  Matches the Top and Bottom half of a picture to a database of pictures.
 #
@@ -5,9 +6,9 @@
 import numpy as np
 import cv2
 import os
+import sys
 import matplotlib.pyplot as plt
-
-MIN_MATCH_COUNT = 10
+from tkinter import *
 
 #Class to hold an image match
 class ImageMatch:
@@ -48,6 +49,7 @@ class ImageMatch:
             self.matches = ImageMatch.bf.match(self.des,self.ref.des)
             # Sort them in the order of their distance.
             self.matches = sorted(self.matches, key = lambda x:x.distance)
+            print("Distance %f, %d matches" % (self.distance(), len(self.matches)))
             
         return self.matches
     
@@ -82,7 +84,9 @@ class ImageMatch:
     def distance(self):
         #Average distance of the 10 best matches in full picture
         matches = self.match()[:10]
-        return sum(m.distance for m in matches)/(len(matches) + 0.0001)
+        avg = sum(m.distance for m in matches)/(len(matches) + 0.0001)
+        avg_scaled = avg*(10/len(matches))
+        return avg_scaled
 
     def upper_distance(self):
         #Sum of distance of the 10 best matches in upper part of picture
@@ -120,33 +124,49 @@ def load_images_from_folder(folder):
 
 if __name__ == '__main__':
     
-    #Read in the query image
-    ref = ImageMatch(cv2.imread('questions/Screenshot_2.jpg',0),"Dec2")
-
-
+    #Read in the query images
+    refs = load_images_from_folder("questions")    
     images = load_images_from_folder("pictures")
-    for image in images:
-        image.set_reference(ref)
 
-    #For all matches.
-    images   = sorted(images, key = lambda x:x.distance())
-    images[0].matchplot()
-    images[1].matchplot()
-    images[2].matchplot()
-    plt.show()
+    master = Tk()
 
+    var = StringVar(master)
 
-    #Sort based on distance
-    up_images   = sorted(images, key = lambda x:x.upper_distance())
-    down_images = sorted(images, key = lambda x:x.lower_distance())
+    #Ask to pick
+    names = [x.name for x in refs]
+    var.set(names[-1])
 
-    print("Best upper match: %s" % (up_images[0].name))
-    print("Best lower match: %s" % (down_images[0].name))
-    up_images[0].matchplot()
-    down_images[0].matchplot()
-    plt.show()
-    
-    print("Done")
+    option = OptionMenu(master, var, *names)
+    option.pack()
+
+    # Test 1 picture
+    def match(ref):
+        global images
+        for image in images:
+             image.set_reference(ref)
+
+        #For all matches.
+        images = sorted(images, key = lambda x:x.distance())
+        for i in images[:10]:
+            print("Image %s. Distance: %f" % (i.name, i.distance()))
+
+        for i in images[:2]:
+            i.matchplot()
+        plt.show()
+
+    # Press the ok..
+    def ok():
+        print("value is", var.get())
+        idx = names.index(var.get())
+        ref = refs[idx]
+        match(ref)
+        
+
+    button = Button(master, text="OK", command=ok)
+    button.pack()
+
+    mainloop()
+
 
 
 
