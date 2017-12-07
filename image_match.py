@@ -129,6 +129,7 @@ if __name__ == '__main__':
     images = load_images_from_folder("pictures")
 
     master = Tk()
+    master.title("Picure matcher")
 
     var = StringVar(master)
 
@@ -161,11 +162,17 @@ if __name__ == '__main__':
         ref = refs[idx]
         match(ref)
         
+    def exit():
+        sys.exit()
 
     button = Button(master, text="OK", command=ok)
     button.pack()
 
-    mainloop()
+    exit = Button(master, text="Exit", command=exit)
+    exit.pack()
+
+
+    master.mainloop()
 
 
 
