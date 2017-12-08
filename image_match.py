@@ -8,13 +8,14 @@ import cv2
 import os
 import sys
 import matplotlib.pyplot as plt
+#import code
 from tkinter import *
 
 #Class to hold an image match
 class ImageMatch:
     #Orb
     orb = cv2.ORB_create()
-    #sift = cv2.features2d.SIFT_create()
+    #sift = cv2.xfeatures2d.SIFT_create()
     # create BFMatcher object
     bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 
@@ -33,7 +34,7 @@ class ImageMatch:
         if ref != None:
             self.set_reference(ref)
         return super().__init__(**kwargs)
-        
+
     #Use another image as reference
     def set_reference(self,ref):
         self.ref = ref
@@ -45,14 +46,14 @@ class ImageMatch:
         if self.matches == None:
             print("Matching %s vs %s" % (self.name, self.ref.name))
             # Match descriptors.
-            #self.matches = ImageMatch.bf.knnMatch(self.des,self.ref.des, k=2)
+            #self.matches = ImageMatch.bf.knnMatch(self.des,self.ref.des, k=1)
             self.matches = ImageMatch.bf.match(self.des,self.ref.des)
             # Sort them in the order of their distance.
             self.matches = sorted(self.matches, key = lambda x:x.distance)
             print("Distance %f, %d matches" % (self.distance(), len(self.matches)))
-            
+
         return self.matches
-    
+
     #Split matches in upper and lower part of image
     def up_or_down(self):
         y_max = self.img.shape[1]
@@ -107,7 +108,7 @@ class ImageMatch:
         img = cv2.drawMatches(self.img    ,self.kp,
                               self.ref.img,self.ref.kp, self.match()[:10], None, flags=2)
         plt.imshow(img)
-        
+
 
 
 
@@ -123,9 +124,9 @@ def load_images_from_folder(folder):
 
 
 if __name__ == '__main__':
-    
+
     #Read in the query images
-    refs = load_images_from_folder("questions")    
+    refs = load_images_from_folder("questions")
     images = load_images_from_folder("pictures")
 
     master = Tk()
@@ -148,12 +149,15 @@ if __name__ == '__main__':
 
         #For all matches.
         images = sorted(images, key = lambda x:x.distance())
-        for i in images[:10]:
-            print("Image %s. Distance: %f" % (i.name, i.distance()))
+        for i in images[:20]:
+            print("Image %s. Distance: %f, %d matches" % (i.name, i.distance(), len(i.matches)))
+
+        #code.interact(local=locals())
 
         for i in images[:2]:
             i.matchplot()
         plt.show()
+
 
     # Press the ok..
     def ok():
@@ -161,7 +165,7 @@ if __name__ == '__main__':
         idx = names.index(var.get())
         ref = refs[idx]
         match(ref)
-        
+
     def exit():
         sys.exit()
 
@@ -173,7 +177,3 @@ if __name__ == '__main__':
 
 
     master.mainloop()
-
-
-
-
