@@ -54,19 +54,29 @@ class ImageMatch:
 
         return self.matches
 
-    #Split matches in upper and lower part of image
-    def up_or_down(self):
+    #Return if a kp is in the upper or lower part of the image
+    def up_or_down(self, kpidx):
         y_max = self.img.shape[1]
         y_half = y_max / 2
+        kp = self.kp[kpidx]
+        y = kp.pt[1]
+        if y < y_half:
+            return "up"
+        else:
+            return "down"
+
+    #Split matches in upper and lower part of image
+    def split_matches(self):
         up = []
-        down = []
+        down = []        
         for m in self.match():
-            kp = self.kp[m.queryIdx]
-            y = kp.pt[1]
-            if y > y_half:
-                up.append(m)
+            if self.up_or_down(m.queryIdx) == "up" and self.ref.up_or_down(m.trainIdx) == "up":
+                up.append (m)
+            elif self.up_or_down(m.queryIdx) == "down" and self.ref.up_or_down(m.trainIdx) == "down":
+                down.append (m)
             else:
-                down.append(m)
+                #Match is not correlated.
+                pass
 
         #Store them sorted
         self.up_matches   = sorted(up,   key = lambda x:x.distance)
@@ -74,39 +84,50 @@ class ImageMatch:
 
     def upper_matches(self):
         if self.up_matches == None:
-            self.up_or_down()
+            self.split_matches()
         return self.up_matches
 
     def lower_matches(self):
         if self.down_matches == None:
-            self.up_or_down()
+            self.split_matches()
         return self.down_matches
 
-    def distance(self):
-        #Average distance of the 10 best matches in full picture
-        matches = self.match()[:10]
+    def distance(self, updown = None):
+        N = 10
+        if updown == "up":
+            matches = self.upper_matches()[:N]
+        elif updown == "down":
+            matches = self.lower_matches()[:N]
+        else:
+            matches = self.match()[:N]
+
+        if len(matches) == 0:
+            return 99999
+
         avg = sum(m.distance for m in matches)/(len(matches) + 0.0001)
-        avg_scaled = avg*(10/len(matches))
+        avg_scaled = avg*(N/len(matches))
         return avg_scaled
 
-    def upper_distance(self):
-        #Sum of distance of the 10 best matches in upper part of picture
-        matches = self.upper_matches()[:10]
-        return sum(m.distance for m in matches)/(len(matches) + 0.0001)
+    def print(self):
+        print("Image %s:" % (self.name))
+        print("    Total Distance: %f, %d matches" % (self.distance(), len(self.matches)))
+        print("    Upper Distance: %f, %d matches" % (self.distance("up"), len(self.up_matches)))
+        print("    Lower Distance: %f, %d matches" % (self.distance("down"), len(self.down_matches)))
 
+    def matchplot(self, updown = None):
+        N = 20
+        if updown == "up":
+            matches = self.upper_matches()[:N]
+        elif updown == "down":
+            matches = self.lower_matches()[:N]
+        else:
+            matches = self.match()[:N]
 
-    def lower_distance(self):
-        #Sum of distance of the 10 best matches in lower part of picture
-        matches = self.lower_matches()[:10]
-        return sum(m.distance for m in matches)/(len(matches) + 0.0001)
-
-
-    def matchplot(self):
         fig = plt.figure()
         a = fig.add_subplot(1,1,1)
-        a.set_title("%s distance %d" % (self.name, self.distance()))
+        a.set_title("%s distance %0.2f, up %0.2f, down %0.2f" % (self.name, self.distance(), self.distance("up"), self.distance("down")))
         img = cv2.drawMatches(self.img    ,self.kp,
-                              self.ref.img,self.ref.kp, self.match()[:10], None, flags=2)
+                              self.ref.img,self.ref.kp, matches, None, flags=2)
         plt.imshow(img)
 
 
@@ -148,14 +169,20 @@ if __name__ == '__main__':
              image.set_reference(ref)
 
         #For all matches.
+        print("Best match for Total distance")
         images = sorted(images, key = lambda x:x.distance())
-        for i in images[:20]:
-            print("Image %s. Distance: %f, %d matches" % (i.name, i.distance(), len(i.matches)))
+        for i in images[:10]:            
+            i.print()
 
-        #code.interact(local=locals())
+        for p in ["up", "down"]:
+            print("Best match for %s distance" % (p))
+            images = sorted(images, key = lambda x:x.distance(p))
+            for i in images[:10]:            
+                i.print()
 
-        for i in images[:2]:
-            i.matchplot()
+            for i in images[:1]:
+                i.matchplot(p)
+
         plt.show()
 
 
