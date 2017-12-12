@@ -8,8 +8,12 @@ import cv2
 import os
 import sys
 import matplotlib.pyplot as plt
+from natsort import natsorted
 #import code
 from tkinter import *
+
+X = 1
+Y = 0
 
 #Class to hold an image match
 class ImageMatch:
@@ -56,7 +60,7 @@ class ImageMatch:
 
     #Return if a kp is in the upper or lower part of the image
     def up_or_down(self, kpidx):
-        y_max = self.img.shape[1]
+        y_max = self.img.shape[Y]
         y_half = y_max / 2
         kp = self.kp[kpidx]
         y = kp.pt[1]
@@ -109,7 +113,7 @@ class ImageMatch:
         return avg_scaled
 
     def print(self):
-        print("Image %s:" % (self.name))
+        print("Image %s: Shape: %dx %dy" % (self.name, self.img.shape[X], self.img.shape[Y]))
         print("    Total Distance: %f, %d matches" % (self.distance(), len(self.matches)))
         print("    Upper Distance: %f, %d matches" % (self.distance("up"), len(self.up_matches)))
         print("    Lower Distance: %f, %d matches" % (self.distance("down"), len(self.down_matches)))
@@ -156,6 +160,7 @@ if __name__ == '__main__':
     var = StringVar(master)
 
     #Ask to pick
+    refs = natsorted(refs, key = lambda x:x.name)
     names = [x.name for x in refs]
     var.set(names[-1])
 
@@ -169,13 +174,18 @@ if __name__ == '__main__':
              image.set_reference(ref)
 
         #For all matches.
-        print("Best match for Total distance")
+        print("\n\nBest match for Total distance")
         images = sorted(images, key = lambda x:x.distance())
         for i in images[:10]:            
             i.print()
 
+        #for i in images[:1]:
+                #i.matchplot()
+                #i.matchplot("up")
+                #i.matchplot("down")
+
         for p in ["up", "down"]:
-            print("Best match for %s distance" % (p))
+            print("\n\nBest match for %s distance" % (p))
             images = sorted(images, key = lambda x:x.distance(p))
             for i in images[:10]:            
                 i.print()
