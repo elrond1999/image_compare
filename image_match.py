@@ -108,7 +108,7 @@ class ImageMatch:
         if len(matches) == 0:
             return 99999
 
-        avg = sum(m.distance for m in matches)/(len(matches) + 0.0001)
+        avg = sum(m.distance for m in matches)/len(matches)
         avg_scaled = avg*(N/len(matches))
         return avg_scaled
 
