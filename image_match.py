@@ -61,7 +61,7 @@ class ImageMatch:
     #Return if a kp is in the upper or lower part of the image
     def up_or_down(self, kpidx):
         y_max = self.img.shape[Y]
-        y_half = y_max / 2
+        y_half = y_max * ( 0.50)
         kp = self.kp[kpidx]
         y = kp.pt[1]
         if y < y_half:
@@ -148,6 +148,56 @@ def load_images_from_folder(folder):
     return images
 
 
+# Test 1 picture
+def match(ref):
+    global images
+    for image in images:
+         image.set_reference(ref)
+
+    #For all matches.
+    print("\n\nBest match for Total distance")
+    best = sorted(images, key = lambda x:x.distance())
+    for i in best[:10]:            
+        i.print()
+
+    #for i in images[:1]:
+            #i.matchplot()
+            #i.matchplot("up")
+            #i.matchplot("down")
+
+    for p in ["up", "down"]:
+        print("\n\nBest match for %s distance" % (p))
+        best = sorted(images, key = lambda x:x.distance(p))
+        for i in best[:10]:            
+            i.print()
+
+        for i in best[:1]:
+            i.matchplot(p)
+
+    plt.show()
+
+def showit():
+    print("value is", var2.get())
+    idx = names_img.index(var2.get())
+    i = images[idx]
+    print ("Index %d is %s and %s" % (idx, names_img[idx], images[idx].name))
+    i.matchplot()
+    i.matchplot("up")
+    i.matchplot("down")
+
+    plt.show()
+
+# Press the ok..
+def ok():
+    print("value is", var.get())
+    idx = names.index(var.get())
+    ref = refs[idx]
+    match(ref)
+
+def exit():
+    sys.exit()
+
+
 if __name__ == '__main__':
 
     #Read in the query images
@@ -167,50 +217,24 @@ if __name__ == '__main__':
     option = OptionMenu(master, var, *names)
     option.pack()
 
-    # Test 1 picture
-    def match(ref):
-        global images
-        for image in images:
-             image.set_reference(ref)
-
-        #For all matches.
-        print("\n\nBest match for Total distance")
-        images = sorted(images, key = lambda x:x.distance())
-        for i in images[:10]:            
-            i.print()
-
-        #for i in images[:1]:
-                #i.matchplot()
-                #i.matchplot("up")
-                #i.matchplot("down")
-
-        for p in ["up", "down"]:
-            print("\n\nBest match for %s distance" % (p))
-            images = sorted(images, key = lambda x:x.distance(p))
-            for i in images[:10]:            
-                i.print()
-
-            for i in images[:1]:
-                i.matchplot(p)
-
-        plt.show()
-
-
-    # Press the ok..
-    def ok():
-        print("value is", var.get())
-        idx = names.index(var.get())
-        ref = refs[idx]
-        match(ref)
-
-    def exit():
-        sys.exit()
-
     button = Button(master, text="OK", command=ok)
     button.pack()
 
+    images = natsorted(images, key = lambda x:x.name)
+    names_img = [x.name for x in images]
+
+    var2 = StringVar(master)
+    var2.set(names_img[-1])
+    show_opt = OptionMenu(master, var2, *names_img)
+    show_opt.pack()
+
+    showbtn = Button(master, text="Show", command=showit)
+    showbtn.pack()
+
     exit = Button(master, text="Exit", command=exit)
     exit.pack()
+
+
 
 
     master.mainloop()
